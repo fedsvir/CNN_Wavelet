@@ -1,21 +1,37 @@
 # CNN_Wavelet
 
-This project presents the results of an artificial intelligence study focused on clustering gamma-ray burst (GRB) light curves.
+**Author**: Fyodor Sviridov
 
-### Objective
-The goal is to cluster a large set of GRB light curves by applying a wavelet transform, extracting features from the resulting scalograms using a pre-trained convolutional neural network, and performing clustering in a high-dimensional feature space.
+This document presents the results of a project on the course "Artificial Intelligence".
 
-### Data
-GRB data recorded by the Fermi/GBM telescope from January 1, 2020 to the present were used (≈1060 bursts). Light curves were constructed from TTE data with a time resolution of 0.128 s in the 50–300 keV energy range, over the interval from −100 s to 400 s relative to the trigger time. Incomplete light curves were discarded, and min–max scaling was applied.
+**Abstract**.
+To attempt to solve a clustering problem for a large set of gamma-ray burst light curves: to apply a wavelet transform to them, extract features from the resulting scalograms using a pre-trained convolutional neural network, and finally apply clustering algorithms for high-dimensional data.
 
-### Wavelet Analysis
-Wavelet transforms were computed using PyWavelets with the complex Morlet wavelet `cmor1.5-1.0`. All light curves were transformed using the same set of scales, covering frequencies from 10⁻⁴ Hz to 9.5 Hz. The resulting wavelet power spectra were normalized using min–max scaling.
+**Data Preparation**.  
+I downloaded gamma-ray burst data recorded by the Fermi/GBM telescope from January 1, 2020 to the present. During this period, approximately 1060 bursts were detected. From the TTE data, light curves were constructed with a time resolution of 0.128 seconds in the energy range of 50–300 keV. The time interval for all light curves was chosen from −100 s to 400 s relative to the trigger time. Light curves that did not contain data covering this time interval were discarded. _Min–max_ scaling was applied to the light curves.
 
-### Feature Extraction
-Scalograms were resized to 224 × 224 and converted to three-channel images. Feature extraction was performed using the pre-trained CLIP convolutional neural network, producing 512-dimensional feature vectors for ~1000 scalograms.
+**Wavelet Transform**.  
+For the wavelet analysis, I used the PyWavelets module. The mother wavelet was chosen as ‘cmor1.5-1.0’, with a bandwidth of 1.5 and a central frequency of 1.0. All normalized light curves were transformed using the same set of scales, corresponding to a frequency range from 10⁻⁴ Hz to 9.5 Hz. The result of the transform is a matrix of wavelet power spectrum coefficients (|w|²). These matrices were also normalized using _min–max_ scaling.
 
-### Dimensionality Reduction
-Principal component analysis (PCA) was applied to the extracted features. The first 30 components, explaining about 95% of the total variance, were retained. Additional physical parameters were tested but did not significantly affect the clustering results.
+**Convolutional Neural Network**.  
+To analyze the resulting scalogram images, CLIP was used—a pre-trained CNN whose purpose is to associate any image with a text description of that image (https://github.com/openai/CLIP.git).  
+The input image must be three-channel with a resolution of 224 × 224; therefore, the scalogram matrices were resized to this resolution and replicated across three channels.  
+As a result, features were extracted from approximately 1000 normalized scalograms, each feature vector having a dimensionality of 512.
 
-### Clustering and Visualization
-Clustering was performed using DBSCAN, with the `eps` parameter selected via a k-nearest-neighbor distance plot. The results were visualized using t-SNE, which was also explored as an alternative method for cluster identification.
+**Dimensionality Reduction**.  
+I attempted to include additional light-curve parameters such as duration, spectral characteristics, luminosity, and redshift, but this did not provide significant additional information and did not strongly affect the final clustering. Therefore, I restricted the analysis to parameters obtained solely from the scalogram images.
+
+To reduce the dimensionality of the resulting data, I applied principal component analysis (PCA), retaining 30 components, which corresponds to approximately 95% of the total variance.
+
+**Clustering**.  
+For clustering, I used DBSCAN, with the parameter *eps* determined by constructing the k-nearest-neighbor distance plot. To visualize the DBSCAN results, I used the t-SNE algorithm; this method was also employed as an alternative approach for identifying clusters. The obtained results and conclusions are presented below.
+
+![image](/images/duration.png)
+![image](/images/clusters.png)
+
+**Conclusions**.  
+The performed clustering analysis of gamma-ray bursts did not reveal well-defined structures, except for a weak separation into short and long bursts. This may be attributed to several factors:
+
+- **Coarse data selection** — the bursts selected in this study exhibit certain limitations, and a more careful data selection procedure should be applied.
+- **Initial feature set** — the extracted features may be insufficiently informative for identifying meaningful clusters. In future studies, it would be worthwhile to consider augmenting the scalogram-based features with additional parameters such as duration, spectral characteristics, luminosity, and redshift.
+- **Wavelet choice** — since the results strongly depend on the choice of the mother wavelet, a comparative analysis of different wavelet families (Daubechies, Haar, Morlet, etc.) should be conducted.
